@@ -13,8 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/dashboard")
-@CrossOrigin(origins = "*")
-
+@CrossOrigin(origins = "http://localhost:5173") 
 public class DashboardController {
 @Autowired
 private ReminderService reminderService;
