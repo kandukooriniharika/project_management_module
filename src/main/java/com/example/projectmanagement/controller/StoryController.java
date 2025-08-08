@@ -16,7 +16,7 @@ import java.util.List;
 
 @RequestMapping("/api/stories")
 
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:5173") 
 
 public class StoryController {
  
