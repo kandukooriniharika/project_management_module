@@ -3,11 +3,13 @@ package com.example.projectmanagement.controller;
 import com.example.projectmanagement.dto.EpicDto;
 import com.example.projectmanagement.dto.ProjectDto;
 import com.example.projectmanagement.dto.SprintDto;
+import com.example.projectmanagement.dto.StoryDto;
 import com.example.projectmanagement.dto.TaskDto;
 import com.example.projectmanagement.entity.Project;
 import com.example.projectmanagement.service.EpicService;
 import com.example.projectmanagement.service.ProjectService;
 import com.example.projectmanagement.service.SprintService;
+import com.example.projectmanagement.service.StoryService;
 import com.example.projectmanagement.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +36,12 @@ public class ProjectController {
 
     @Autowired
     private TaskService taskService;
+private final StoryService storyService;
 
+    @Autowired
+    public ProjectController(StoryService storyService) {
+        this.storyService = storyService;
+    }
     // ✅ CREATE a new project
     @PostMapping
     public ResponseEntity<ProjectDto> createProject(@Valid @RequestBody ProjectDto projectDto) {
@@ -130,6 +137,12 @@ public ResponseEntity<ProjectDto> unarchiveProject(@PathVariable Long projectId)
         ProjectDto updatedProject = projectService.addMemberToProject(projectId, userId);
         return ResponseEntity.ok(updatedProject);
     }
+// ✅ GET Stories by project ID
+@GetMapping("/{id}/stories")
+public ResponseEntity<List<StoryDto>> getProjectStories(@PathVariable Long id) {
+    List<StoryDto> stories = storyService.getStoriesByProjectId(id);
+    return ResponseEntity.ok(stories);
+}
 
     // ✅ Remove member from project
     @DeleteMapping("/{projectId}/members/{userId}")

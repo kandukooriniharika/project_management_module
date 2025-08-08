@@ -14,7 +14,7 @@ import java.util.List;
 public interface StoryRepository extends JpaRepository<Story, Long> {
     
     List<Story> findByEpicId(Long epicId);
-    
+     List<Story> findByProjectId(Long epicId);
     List<Story> findByStatus(Story.StoryStatus status);
     
     List<Story> findByAssigneeId(Long assigneeId);
