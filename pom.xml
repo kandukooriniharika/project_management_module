@@ -55,11 +55,13 @@
             <artifactId>lombok</artifactId>
             <version>1.18.30</version>
         </dependency>
-<dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
+
+        <!-- Spring Boot Mail Starter for SMTP Email -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
+
         <!-- Spring Security -->
         <!-- <dependency>
        
@@ -84,8 +86,6 @@
         <artifactId>spring-security-oauth2-jose</artifactId>
         </dependency> -->
  
-<!-- Springdoc OpenAPI UI -->
-
 
     </dependencies>
 
