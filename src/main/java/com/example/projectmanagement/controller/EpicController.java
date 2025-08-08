@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/epics")
+@CrossOrigin(origins = "*")
 public class EpicController {
 
     @Autowired
