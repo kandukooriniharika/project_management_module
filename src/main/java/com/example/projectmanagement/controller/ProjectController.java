@@ -22,7 +22,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/projects")
-@CrossOrigin(origins = "http://localhost:5173") 
+@CrossOrigin(origins = "http://localhost:5173")
 public class ProjectController {
 
     @Autowired
@@ -57,19 +57,18 @@ private final StoryService storyService;
     }
 
     // ✅ UPDATE project
-  @PutMapping("/{id}")
-public ResponseEntity<ProjectDto> updateProject(@PathVariable Long id,
-                                                @RequestBody ProjectDto updatedProjectDto) {
-    ProjectDto updated = projectService.updateProject(id, updatedProjectDto);
-    return ResponseEntity.ok(updated);
-}
-@PatchMapping("/api/projects/{projectId}/unarchive")
-public ResponseEntity<ProjectDto> unarchiveProject(@PathVariable Long projectId) {
-    ProjectDto dto = projectService.unarchiveProject(projectId);
-    return ResponseEntity.ok(dto);
-}
+    @PutMapping("/{id}")
+    public ResponseEntity<ProjectDto> updateProject(@PathVariable Long id,
+            @RequestBody ProjectDto updatedProjectDto) {
+        ProjectDto updated = projectService.updateProject(id, updatedProjectDto);
+        return ResponseEntity.ok(updated);
+    }
 
-
+    @PatchMapping("/{projectId}/unarchive")
+    public ResponseEntity<ProjectDto> unarchiveProject(@PathVariable Long projectId) {
+        ProjectDto dto = projectService.unarchiveProject(projectId);
+        return ResponseEntity.ok(dto);
+    }
 
     // ✅ DELETE project
     @DeleteMapping("/{id}")
@@ -150,5 +149,11 @@ public ResponseEntity<List<StoryDto>> getProjectStories(@PathVariable Long id) {
             @PathVariable Long userId) {
         ProjectDto updatedProject = projectService.removeMemberFromProject(projectId, userId);
         return ResponseEntity.ok(updatedProject);
+    }
+
+    @GetMapping("/overdue")
+    public ResponseEntity<List<ProjectDto>> getOverdueProjects() {
+        List<ProjectDto> overdueProjects = projectService.getOverdueProjects();
+        return ResponseEntity.ok(overdueProjects);
     }
 }
