@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,11 +46,11 @@ public class ProjectService {
         } else if (projectRepository.existsByProjectKey(projectDto.getProjectKey())) {
             errors.add("Project with key " + projectDto.getProjectKey() + " already exists.");
         }
-
+        
         if (projectDto.getStartDate() == null) {
             errors.add("Start date is required.");
         }
-
+        // endDate is optional, but if provided, must be after or equal to startDate
         if (projectDto.getStartDate() != null && projectDto.getEndDate() != null &&
                 projectDto.getStartDate().isAfter(projectDto.getEndDate())) {
             errors.add("Start date cannot be after end date.");
@@ -154,57 +155,50 @@ public class ProjectService {
     }
 
     public ProjectDto updateProject(Long id, ProjectDto updatedDto) {
-        List<String> errors = new ArrayList<>();
+    List<String> errors = new ArrayList<>();
 
-        Project existing = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+    Project existing = projectRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
 
-        Project.ProjectStatus existingStatus = existing.getStatus();
-        Project.ProjectStatus newStatus = updatedDto.getStatus();
+    Project.ProjectStatus existingStatus = existing.getStatus();
+    Project.ProjectStatus newStatus = updatedDto.getStatus();
 
-        if (existingStatus == Project.ProjectStatus.ARCHIVED && newStatus != Project.ProjectStatus.ACTIVE) {
-            errors.add("Cannot update an archived project unless status is changed to ACTIVE.");
-        }
-
-        if (updatedDto.getStartDate() != null && updatedDto.getEndDate() != null &&
-                updatedDto.getStartDate().isAfter(updatedDto.getEndDate())) {
-            errors.add("Start date cannot be after end date.");
-        }
-
-        if (updatedDto.getOwner() != null && !userRepository.existsById(updatedDto.getOwner().getId())) {
-            errors.add("Owner not found with id: " + updatedDto.getOwner().getId());
-        }
-
-        if (!errors.isEmpty()) {
-            throw new ValidationException(errors);
-        }
-
-        // Apply changes
-        if (existingStatus == Project.ProjectStatus.ARCHIVED && newStatus == Project.ProjectStatus.ACTIVE) {
-            existing.setStatus(Project.ProjectStatus.ACTIVE);
-        } else {
-            existing.setName(updatedDto.getName());
-            existing.setDescription(updatedDto.getDescription());
-            existing.setProjectKey(updatedDto.getProjectKey());
-            existing.setStartDate(updatedDto.getStartDate());
-            existing.setEndDate(updatedDto.getEndDate());
-            existing.setStatus(updatedDto.getStatus());
-
-            if (updatedDto.getOwner() != null) {
-                User owner = userRepository.findById(updatedDto.getOwner().getId()).get();
-                existing.setOwner(owner);
-            }
-        }
-
-        return convertToDto(projectRepository.save(existing));
+    if (existingStatus == Project.ProjectStatus.ARCHIVED && newStatus != Project.ProjectStatus.ACTIVE) {
+        errors.add("Cannot update an archived project unless status is changed to ACTIVE.");
+    }
+    if (updatedDto.getStartDate() != null && updatedDto.getEndDate() != null &&
+        updatedDto.getStartDate().isAfter(updatedDto.getEndDate())) {
+        errors.add("Start date cannot be after end date.");
     }
 
-    public void deleteProject(Long id) {
-        if (!projectRepository.existsById(id)) {
-            throw new RuntimeException("Project not found with id: " + id);
-        }
-        projectRepository.deleteById(id);
+    if (updatedDto.getOwner() != null && !userRepository.existsById(updatedDto.getOwner().getId())) {
+        errors.add("Owner not found with id: " + updatedDto.getOwner().getId());
     }
+
+    if (!errors.isEmpty()) {
+        throw new ValidationException(errors);
+    }
+
+    // Apply changes
+    if (existingStatus == Project.ProjectStatus.ARCHIVED && newStatus == Project.ProjectStatus.ACTIVE) {
+        existing.setStatus(Project.ProjectStatus.ACTIVE);
+    } else {
+        existing.setName(updatedDto.getName());
+        existing.setDescription(updatedDto.getDescription());
+        existing.setProjectKey(updatedDto.getProjectKey());
+        existing.setStartDate(updatedDto.getStartDate());
+        existing.setEndDate(updatedDto.getEndDate()); // endDate can be null
+        existing.setStatus(updatedDto.getStatus());
+
+        if (updatedDto.getOwner() != null) {
+            User owner = userRepository.findById(updatedDto.getOwner().getId()).get();
+            existing.setOwner(owner);
+        }
+    }
+
+    return convertToDto(projectRepository.save(existing));
+}
+
 
     public ProjectDto addMemberToProject(Long projectId, Long userId) {
         Project project = projectRepository.findById(projectId)
@@ -260,6 +254,17 @@ public class ProjectService {
         }
     }
 
+    public List<ProjectDto> getOverdueProjects() {
+        List<Project> all = projectRepository.findAll();
+        LocalDateTime now = LocalDateTime.now();
+        return all.stream()
+            .filter(p -> p.getEndDate() != null && p.getEndDate().isBefore(now))
+            .filter(p -> p.getStatus() != Project.ProjectStatus.COMPLETED && p.getStatus() != Project.ProjectStatus.ARCHIVED)
+            .map(this::convertToDto)
+            .collect(Collectors.toList());
+    }
+
+
     private ProjectDto convertToDto(Project project) {
         ProjectDto dto = modelMapper.map(project, ProjectDto.class);
         dto.setOwnerId(project.getOwner().getId());
@@ -280,6 +285,12 @@ public class ProjectService {
         Project updated = projectRepository.save(project);
 
         return convertToDto(updated); // or use manual conversion
+    }
+
+    public void deleteProject(Long id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+        projectRepository.delete(project);
     }
 
 }
